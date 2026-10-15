@@ -226,3 +226,10 @@ Do not report a successful integrated link, range, packet success rate, or laten
 - Record unsuccessful tests and uncertain measurements honestly; do not claim reliable VLC acknowledgement until it has been demonstrated repeatedly.
 
 ## Contributions
+
+
+This project was developed collaboratively as part of an academic software development project. The team worked on the design, implementation, integration, and testing of the Automated Flexible Timetable Scheduler.
+
+Key areas of contribution included frontend development, backend scheduling logic, Excel-based data ingestion, database management, user interface design, testing, and project documentation.
+
+This repository presents the collaborative project, with individual contributions acknowledged according to the work performed by each team member.
