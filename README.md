@@ -1,19 +1,100 @@
 # Hybrid-RF-VLC-System
-This is an ongoing research project on Hybrid RF-VLC Communication System
+This is an ongoing research project on a Hybrid RF-VLC Communication System
 
-A two-node prototype using an NRF24L01 radio link for data transfer and a visible-light link for acknowledgement.
+A two-node Arduino prototype that combines **radio-frequency (RF) communication** with a **visible-light communication (VLC) acknowledgement link**. Node A sends a data packet over an NRF24L01 radio link; Node B receives it and responds by modulating an LED, and Node A attempts to detect that optical acknowledgement using a photodiode receiver.
 
-## 1. System architecture
+> **Development status:** RF packet reception has been observed during bench testing. The VLC acknowledgement receiver is still being calibrated, so the complete RF-to-VLC acknowledgement loop should be considered a work in progress until repeated end-to-end tests succeed.
 
-- **Node A:** Arduino Uno, NRF24L01 RF transmitter, IR photodiode + LM358 receiver.
-- **Node B:** Arduino Uno, NRF24L01 RF receiver, MOSFET-driven LED VLC transmitter.
-- **Forward channel:** Node A → Node B over RF.
-- **Acknowledgement channel:** Node B → Node A over VLC.
-- The application alternates between RF packet transmission and VLC acknowledgement; Node B turns off RF listening while transmitting the optical ACK pattern.
+## Overview
 
-> **Status note:** RF packet reception has been observed during testing. VLC acknowledgement detection is still under calibration. The reported ADC values (LED off ~450–490; LED on ~470, occasionally ~500) do not yet demonstrate a sufficiently stable optical signal. Do not describe the full integrated link as verified until repeated tests succeed.
+Conventional wireless systems often use the same radio channel for both data and acknowledgement. This project explores a hybrid arrangement in which the forward data packet is transmitted over RF and the acknowledgement is returned through light. The prototype uses two Arduino Uno boards, NRF24L01 radio modules, and a photodiode-based optical receiver.
 
-## 2. Repository layout
+The current sketches provide a starting point for testing the communication sequence and receiver threshold. They are intended for controlled bench experiments, not as a finished or deployment-ready communication system.
+
+## Problem Statement
+
+RF links are useful for sending data without line-of-sight, while optical communication can provide a separate return channel in suitable lighting and alignment conditions. A hybrid system introduces practical challenges such as synchronising the two channels, detecting a relatively small optical signal, rejecting ambient light, and ensuring that an acknowledgement corresponds to the packet that was sent.
+
+This project investigates a basic two-node design: send a packet from Node A to Node B over RF, then return an acknowledgement from Node B to Node A using an LED and photodiode receiver.
+
+## Key Features
+
+- **Hybrid communication path:** Uses RF for the forward data packet and VLC for the return acknowledgement.
+- **Two Arduino nodes:** Separates the transmitter/receiver roles across Node A and Node B.
+- **NRF24L01 link:** Uses the RF24 library by TMRh20 with matching radio settings on both nodes.
+- **LED-based optical transmitter:** Node B emits a timed light-pulse pattern when a valid RF packet is received.
+- **Photodiode receiver:** Node A samples an LM358-based analogue front end and checks for a light-pulse pattern.
+- **Serial diagnostics:** Reports packet reception, sequence values, and acknowledgement outcomes for bench testing.
+- **Calibration guidance:** Documents receiver threshold settings, wiring checks, and test steps.
+- **Modular Arduino sketches:** Keeps Node A and Node B firmware in separate folders.
+
+## Prototype Preview
+
+<!-- Add a real photograph or diagram of the assembled hardware here when available. -->
+<!-- Suggested path: docs/images/hybrid-rf-vlc-prototype.png -->
+
+*No verified hardware photograph is included in this repository yet.*
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Microcontrollers | 2 × Arduino Uno or compatible boards |
+| RF transceiver | NRF24L01 modules |
+| RF software library | RF24 by TMRh20 |
+| Optical transmitter | LED module driven through a MOSFET/appropriate LED driver |
+| Optical receiver | Photodiode and LM358 analogue front end |
+| Firmware language | Arduino C++ |
+| Interface for testing | Arduino IDE Serial Monitor |
+| Version control | Git and GitHub |
+
+## System Architecture
+
+The RF link carries the application packet from Node A to Node B. After receiving a valid packet, Node B temporarily stops RF listening and emits an optical acknowledgement pulse pattern. Node A monitors the photodiode receiver output for that pattern.
+
+```text
+             FORWARD DATA: RF
+    +--------------------------------+
+    |                                v
++-----------+   NRF24L01 RF     +-----------+
+|  Node A   | ----------------> |  Node B   |
+| Arduino   |                   | Arduino   |
+|           |                   |           |
+| Photodiode| <---------------- | LED +     |
+| + LM358   |    VLC ACK LIGHT  | MOSFET /  |
++-----------+                   | LED driver|
+                                +-----------+
+```
+
+*This is the intended logical flow. Actual end-to-end VLC acknowledgement detection is still under calibration.*
+
+## Application Workflow
+
+### 1. Initialise both nodes
+
+Upload the Node A and Node B sketches to their respective Arduino boards. Both radio modules must use matching RF channel, data rate, address, and packet structure settings.
+
+### 2. Send a packet over RF
+
+Node A sends a packet containing a marker, node identifier, and sequence number through its NRF24L01 module.
+
+### 3. Receive and validate the packet
+
+Node B listens for RF packets and checks the packet marker and sender identifier before initiating the optical acknowledgement.
+
+### 4. Transmit the VLC acknowledgement
+
+Node B pauses RF listening and drives the LED with a timed two-pulse pattern. Use an appropriate MOSFET and LED current driver for the specific LED module.
+
+### 5. Detect the optical response
+
+Node A samples the analogue receiver output and compares it with an ambient baseline. It looks for the expected pulse pattern before declaring an acknowledgement. The threshold and receiver circuit require calibration under the actual test conditions.
+
+### 6. Review serial output and measurements
+
+Use the Serial Monitor on both boards to inspect RF reception, sequence values, acknowledgement detections, and timeouts. Record LED-off and LED-on readings before changing the detection thresholds.
+
+## Project Structure
 
 ```text
 hybrid-rf-vlc/
@@ -30,25 +111,44 @@ hybrid-rf-vlc/
     └── results.md
 ```
 
-## 3. Required components
+### Key Components
 
-- 2 × Arduino Uno (or compatible 5 V boards)
-- 2 × NRF24L01 modules
-- 1 × LM358 op-amp
-- 1 × IR photodiode
-- 1 × LED module suitable for the selected supply
-- 1 × IRFZ44N MOSFET or a suitable logic-level MOSFET/driver
-- 220–330 Ω gate resistor, 10 kΩ gate pull-down
-- Appropriate LED current limiting/driver, if not built into the LED module
-- 2 × 10 µF capacitors for NRF24L01 supply decoupling (one per module)
-- LM358 feedback components and a stable reference network
-- Jumper wires, breadboards, multimeter, and regulated supplies
+| File / Directory | Responsibility |
+|---|---|
+| `Node_A/Node_A.ino` | Sends RF packets and monitors the photodiode receiver for VLC acknowledgements |
+| `Node_B/Node_B.ino` | Receives RF packets and transmits an LED pulse pattern as an optical acknowledgement |
+| `docs/circuit-connections.md` | Summarizes the main wiring connections and hardware cautions |
+| `docs/testing-and-calibration.md` | Provides bench-test and receiver-calibration guidance |
+| `docs/results.md` | Records current observations and results that still need verification |
+| `LICENSE` | Repository license text |
+| `.gitignore` | Excludes common generated and local files from version control |
 
-## 4. Wiring summary
+## Getting Started
 
-### Both NRF24L01 modules
+### Prerequisites
 
-| NRF24L01 | Arduino Uno |
+- 2 × Arduino Uno or compatible boards
+- 2 × NRF24L01 radio modules
+- 1 × LM358 op-amp and 1 × photodiode for Node A
+- 1 × LED module, suitable MOSFET or gate driver, and appropriate LED current driver for Node B
+- Jumper wires, a multimeter, and suitable regulated power supplies
+- Arduino IDE
+- **RF24 library by TMRh20**, installed through the Arduino IDE Library Manager
+
+### 1. Clone the Repository
+
+Replace the placeholder URL with your GitHub repository URL.
+
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd hybrid-rf-vlc
+```
+
+### 2. Wire the NRF24L01 Modules
+
+Use the following SPI connections on both Arduino Uno boards:
+
+| NRF24L01 pin | Arduino Uno pin |
 |---|---|
 | VCC | 3.3 V only |
 | GND | GND |
@@ -59,84 +159,70 @@ hybrid-rf-vlc/
 | MISO | D12 |
 | IRQ | Not connected |
 
-Place a 10 µF capacitor directly across each NRF module's 3.3 V and GND pins, observing electrolytic polarity. NRF24L01 modules must not be powered from 5 V.
+Place a 10 µF capacitor directly across each NRF24L01 module's 3.3 V and GND pins, observing polarity. **Never power an NRF24L01 module from 5 V.**
 
-### Node A receiver
+### 3. Connect Node A's Optical Receiver
 
-| Component/pin | Connection |
+The current prototype uses a photodiode and LM358 amplifier, with the amplifier output connected to Arduino A0. The intended circuit includes a reference near 2.5 V and a feedback resistor/capacitor network.
+
+Refer to [`docs/circuit-connections.md`](docs/circuit-connections.md). Verify photodiode polarity, amplifier topology, and the actual LM358 pin connections before powering the circuit. A connection description alone does not guarantee that the analogue front end is correctly biased or stable.
+
+### 4. Connect Node B's LED Driver
+
+The sketch uses Arduino D5 as the LED control output. Use a gate resistor and a gate-to-ground pull-down, and ensure the LED is connected through a suitable current-limiting arrangement or a driver designed for the exact module.
+
+**Important:** A 12 V, 2.4 W load draws approximately 0.2 A at its rated operating point. Do not connect a bare LED directly to 12 V. Confirm whether the part is a complete 12 V module with built-in current regulation; if not, use a suitable constant-current driver. The IRFZ44N is not guaranteed to turn fully on from a 5 V Arduino output, so use a logic-level MOSFET or an appropriate gate driver if required. Keep the supply grounds common for a low-side MOSFET arrangement.
+
+### 5. Install the RF24 Library
+
+In Arduino IDE, open **Library Manager**, search for **RF24 by TMRh20**, and install it.
+
+### 6. Upload the Sketches
+
+1. Connect Node B to the computer and open `Node_B/Node_B.ino`.
+2. Select the correct board and port, then upload the sketch.
+3. Connect Node A and upload `Node_A/Node_A.ino`.
+4. Open a Serial Monitor for each board at **9600 baud**.
+5. Confirm that Node B reports received packet sequence numbers before attempting to evaluate VLC acknowledgements.
+
+### 7. Test and Calibrate
+
+Follow [`docs/testing-and-calibration.md`](docs/testing-and-calibration.md). First test RF reception on its own. Then measure the receiver output with the LED off and on, align the optical path, and confirm that the signal difference is stable before adjusting software thresholds.
+
+## Results and Performance
+
+Current bench observations indicate that the NRF24L01 modules were detected and that Node B received RF packets. The optical receiver has not yet shown a sufficiently stable, repeatable difference between LED-off and LED-on states to confirm reliable end-to-end VLC acknowledgement.
+
+Previously observed analogue readings overlapped substantially (roughly 450–490 ADC counts with the LED off and around 470, occasionally rising near 500, with the LED on). These measurements are preliminary and depend on the setup, ambient lighting, and alignment.
+
+| Metric | Current status |
 |---|---|
-| LM358 pin 8 | +5 V |
-| LM358 pin 4 | GND |
-| LM358 pin 1 | Arduino A0; feedback network output |
-| LM358 pin 2 (−) | Photodiode cathode and feedback network |
-| LM358 pin 3 (+) | Stable reference near 2.5 V |
-| Feedback resistor | Pin 1 ↔ Pin 2 |
-| Feedback capacitor | Parallel with feedback resistor, Pin 1 ↔ Pin 2 |
-| Photodiode anode | GND, only if this matches the verified receiver topology |
+| NRF24L01 module initialization | Observed during bench testing |
+| RF packet reception at Node B | Observed during bench testing |
+| Stable LED-off / LED-on separation | Not yet established |
+| Reliable VLC acknowledgement detection | Not yet verified |
+| End-to-end hybrid link reliability | Not yet verified |
 
-The pin-2 photodiode connection above is the current reported wiring, not a guarantee that the analog front end is optimally biased. Verify the exact photodiode polarity and amplifier topology against its datasheet and a proper transimpedance-amplifier design before final testing. The 100 µF and 10 µF capacitors previously placed across LM358 pins 8 and 4 are supply decoupling; they do not replace NRF24L01 decoupling.
+Do not report a successful integrated link, range, packet success rate, or latency until it has been measured repeatedly and documented. Add new measurements to `docs/results.md` with test conditions and dates.
 
-### Node B VLC transmitter
+## Current Limitations and Future Improvements
 
-| Component/pin | Connection |
-|---|---|
-| Arduino D5 | 220–330 Ω resistor → MOSFET gate |
-| MOSFET gate | 10 kΩ pull-down to GND |
-| MOSFET source | GND |
-| MOSFET drain | LED module negative, if using a low-side driver |
-| LED module positive | Correct supply positive through its required driver/current limiter |
-| Supply GND | Arduino GND |
+- **Optical receiver calibration:** The LED-on and LED-off readings currently overlap; the analogue front end and optical alignment need further investigation.
+- **Ambient-light sensitivity:** Simple amplitude thresholds can be affected by room lighting, sunlight, and slow output drift.
+- **Basic acknowledgement pattern:** The pulse sequence is a bench-test pattern, not a robust framed VLC protocol.
+- **RF auto-ack disabled:** The sketches disable NRF24L01 hardware auto-ack because the intended acknowledgement path is optical.
+- **Packet/ACK association:** A future protocol should include the received sequence number in the optical acknowledgement so Node A can verify which packet was acknowledged.
+- **Hardware validation:** Confirm the photodiode amplifier topology, stable reference, LED current driver, and MOSFET gate-drive requirements.
+- **Reliability testing:** Measure successful acknowledgements, timeouts, range, alignment tolerance, ambient-light performance, and latency over repeated trials.
 
-**Important LED safety:** The 12 V, 2.4 W LED is rated at about 0.2 A at 12 V. Do not connect it directly to 12 V without confirming that it is a complete 12 V module with built-in current regulation. If it is a bare LED, use a suitable constant-current driver; a small-signal 5 mm LED resistor calculation does not apply. The IRFZ44N is not guaranteed to turn fully on from a 5 V Arduino gate drive; use a logic-level MOSFET or a proper gate driver if needed. Do not connect or disconnect LED wiring while powered.
-
-## 5. Arduino library
-
-Install **RF24 by TMRh20** through Arduino IDE Library Manager.
-
-Both sketches use the same radio channel, data rate, address, packet structure, and disabled RF auto-ack setting.
-
-## 6. Upload order
-
-1. Wire Node A's NRF24L01 and Node B's NRF24L01; add the 10 µF decoupling capacitors.
-2. Test each radio separately with a basic RF example.
-3. Upload `Node_B/Node_B.ino` to Node B.
-4. Upload `Node_A/Node_A.ino` to Node A.
-5. Open the correct Serial Monitor for each board at **9600 baud**.
-6. Confirm Node B prints `Received sequence=...`.
-7. Test the LED and receiver separately with a continuous-light test.
-8. Record stable LED-OFF and LED-ON A0 values before tuning the threshold.
-9. Run the integrated code and record successful ACKs, timeouts, distance, and ambient-light conditions.
-
-## 7. Calibration
-
-Node A currently uses:
-- `ACK_DELTA = 40`: required increase above ambient baseline for an ON pulse.
-- `LOW_DELTA = 15`: OFF level must fall to baseline + 15 or below.
-- `ACK_TIMEOUT_MS = 2500`: maximum wait for the acknowledgement.
-
-These are starting values, not universal settings. Tune only after measurements show a repeatable difference between LED OFF and ON. If the receiver output does not change consistently, fix the analog front end or optical alignment first; lowering the threshold excessively can create false acknowledgements from ambient light.
-
-## 8. Known limitations
-
-- The receiver currently uses simple amplitude thresholding, not a complete VLC physical-layer decoder.
-- Ambient light and slow LM358 output drift can cause false detections or timeouts.
-- RF auto-ack is disabled; delivery confirmation is intended to be supplied by VLC.
-- The current baseline sketches are for controlled bench testing, not a robust deployed network.
-- Duplicate suppression, CRC/application-level integrity checks, and a more formal ACK frame are recommended improvements.
-
-## 9. Safety and measurement notes
+## Safety and Measurement Notes
 
 - Disconnect power before rewiring.
-- Verify LED module ratings and current limiting before applying 12 V.
-- Never feed 12 V into Arduino pins, LM358 inputs, or NRF24L01 power pins.
-- Keep all grounds common where required by the MOSFET driver.
-- Use a multimeter to verify supply rails and LM358 output before connecting A0.
-- Record measurements honestly; do not report a successful VLC ACK unless it is repeatedly observed with Node B's LED as the source.
+- Never apply 12 V to Arduino I/O pins, LM358 inputs, or NRF24L01 power pins.
+- Power NRF24L01 modules from 3.3 V only and add local supply decoupling.
+- Confirm the LED's current-control requirements before connecting a 12 V supply.
+- Verify common ground and MOSFET pinout against the exact device datasheet.
+- Measure the LM358 output and supply rails before connecting or relying on the Arduino analogue input.
+- Record unsuccessful tests and uncertain measurements honestly; do not claim reliable VLC acknowledgement until it has been demonstrated repeatedly.
 
-## 10. Suggested future improvements
-
-- Add a proper photodiode transimpedance amplifier and stable bias/reference.
-- Use a logic-level MOSFET or dedicated LED driver.
-- Encode the ACK with a preamble and timing-based pulse decoder.
-- Add packet CRC, sequence matching in the ACK, retry limits, and duplicate suppression.
-- Test range, alignment, ambient-light rejection, packet success rate, and latency.
+## Contributions
