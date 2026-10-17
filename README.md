@@ -1,7 +1,9 @@
 # Hybrid-RF-VLC-System
 This is an ongoing research project on a Hybrid RF-VLC Communication System
 
-A two-node Arduino prototype that combines **radio-frequency (RF) communication** with a **visible-light communication (VLC) acknowledgement link**. Node A sends a data packet over an NRF24L01 radio link; Node B receives it and responds by modulating an LED, and Node A attempts to detect that optical acknowledgement using a photodiode receiver.
+A two-node Arduino prototype that combines **radio-frequency (RF) communication** with a **visible-light communication (VLC) acknowledgement link**. Node A sends a data packet over an NRF24L01 radio link; Node B receives it and responds by modulating an LED, and Node A attempts to detect that optical acknowledgement using a photodiode receiver. A bidirectional hybrid communication link using two Arduino Uno nodes:
+- Node A: NRF24L01 RF transmitter + IR photodiode/LM358 VLC receiver.
+- Node B: NRF24L01 RF receiver + LED/MOSFET VLC transmitter.
 
 > **Development status:** RF packet reception has been observed during bench testing. The VLC acknowledgement receiver is still being calibrated, so the complete RF-to-VLC acknowledgement loop should be considered a work in progress until repeated end-to-end tests succeed.
 
@@ -228,8 +230,8 @@ Do not report a successful integrated link, range, packet success rate, or laten
 ## Contributions
 
 
-This project was developed collaboratively as part of an academic software development project. The team worked on the design, implementation, integration, and testing of the Automated Flexible Timetable Scheduler.
+This project is developed collaboratively as part of a research hardware development project. The team is working on the design, implementation, integration, and testing of the Hybrid RF-VLC System.
 
-Key areas of contribution included frontend development, backend scheduling logic, Excel-based data ingestion, database management, user interface design, testing, and project documentation.
+Key areas of contribution included hybrid RF-VLC system design, Arduino firmware development, NRF24L01-based RF communication, LED-based optical acknowledgement transmission, photodiode receiver calibration, hardware integration, testing, troubleshooting, and project documentation.
 
 This repository presents the collaborative project, with individual contributions acknowledged according to the work performed by each team member.
