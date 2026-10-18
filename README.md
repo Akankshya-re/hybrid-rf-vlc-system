@@ -31,6 +31,7 @@ This project investigates a basic two-node design: send a packet from Node A to 
 - **Modular Arduino sketches:** Keeps Node A and Node B firmware in separate folders.
 
 ## Prototype Preview
+<img width="1536" height="527" alt="44cd1a71-4062-4a1e-b220-971d502cef52" src="https://github.com/user-attachments/assets/0c651d51-9b2f-49bf-bb07-3fb15c749ff7" />
 
 <!-- Add a real photograph or diagram of the assembled hardware here when available. -->
 <!-- Suggested path: docs/images/hybrid-rf-vlc-prototype.png -->
@@ -54,19 +55,8 @@ This project investigates a basic two-node design: send a packet from Node A to 
 
 The RF link carries the application packet from Node A to Node B. After receiving a valid packet, Node B temporarily stops RF listening and emits an optical acknowledgement pulse pattern. Node A monitors the photodiode receiver output for that pattern.
 
-```text
-             FORWARD DATA: RF
-    +--------------------------------+
-    |                                v
-+-----------+   NRF24L01 RF     +-----------+
-|  Node A   | ----------------> |  Node B   |
-| Arduino   |                   | Arduino   |
-|           |                   |           |
-| Photodiode| <---------------- | LED +     |
-| + LM358   |    VLC ACK LIGHT  | MOSFET /  |
-+-----------+                   | LED driver|
-                                +-----------+
-```
+<img width="1536" height="1024" alt="f5a45e6d-0769-491c-8ce7-790b9d1203e0" src="https://github.com/user-attachments/assets/d5d22486-4ee2-4d7d-a42b-66bb85b87af6" /><img width="1536" height="527" alt="44cd1a71-4062-4a1e-b220-971d502cef52" src="https://github.com/user-attachments/assets/1c5c8e0b-ec79-42de-8daf-8e5c2476d585" />
+
 
 *This is the intended logical flow. Actual end-to-end VLC acknowledgement detection is still under calibration.*
 
